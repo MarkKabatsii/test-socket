@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<meta name="robots" content="noindex">
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Socket test</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="style/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.js"></script>
+</head>
+<body>
+<div class="trader-app">
+    <div class="container">
+        <div class="trader">
+            <div class="trader-wrapper">
+                <h2 class="feed-title">Live Feed</h2>
+                <div class="currency-title">
+                    <button id="sortSymbol" class="secondary-btn">Symbol</button>
+                    <button class="secondary-btn">Price</button>
+                </div>
+                <ul id="trader-list">
+                </ul>
+            </div>
+            <h3 id="handler-message"></h3>
+            <div class="btn-group">
+                <button id="connectToServer" class="primary-btn">Connect</button>
+                <button id="disconnectToServer" class="primary-btn">Disconnect</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    /**
+     Main Objective:
+     Create "live feed" widget per the provided design (pandaTest_state1.png, pandaTest2_state2.png)
+     using any JavaScript frontend framework or plain (Vanilla) javascript.
+
+     Important Notes:
+     - Not all information received from the socket is relevant for this task, use only fields listed below and filter information as specified.
+     - Only symbols related to the "CRYPTO" category should be used, filter data received from socket accodingly (data format explained below).
+     - Each emit must have unique reqID object (Already implemented below)
+     - You do not have to implement your code on this file, feel free to creat your own files.
+
+     /*
+     Implementaion notes for aplication State1 (pandaTest_state1.png):
+     - This is the initial application state.
+     - Socket should be disconnected.
+     - Switched back to once socket disconnected (Disconnet button on state 2).
+     - Symbol list should be empty.
+     - "Connect button" - initiates socket connection.
+     - Once socket connected the application should be switched to state2.
+     - Implement error handling (eg: network errors, data errors, etc...).
+     */
+
+        // socket connect
+    var socket = io('wss://panda-fx.pandats-client.io:443', {
+            path: '/socket.io',
+            transports: ['websocket'],
+        });
+
+    // On connect
+    socket.on('connect', () => console.log('connected', socket));
+
+    /*
+        Implementaion notes for State2 (pandaTest_state2.png):
+        - Switched to once socket connected.
+        - Use "MT4GetAllSymbols" emit to load all symbols with initial values.
+        - Sort symbol list alphabetically.
+        - On "Symbol" title click the sort should be switched to ascending/descending order.
+        - Normalize price decimal point display accoding to the symbol "digits" value recived from "MT4GetAllSymbols",
+        e.g. (symbol price: 1.12349999, digits: 5 -> display: 1.12349).
+        - subscribe to "quotesSubscribe" in order to receive "quotes" and update price list dynamically.
+        - As per the provided design, The current qoute price should be colored green if it is higher than the previous one recieved and red if it is lower.
+        - Add arrow indicator next to the colored price with the same color, pointing up if the price is higher or down if lower from the previous qoute.
+        - Implement error handling (eg: network errors, data errors, etc...)
+    */
+
+    /*
+        MT4GetAllSymbols - Response notes:
+        - Response format is an array of symbols, each symbol with several fields - only the following fields is relevant for this task:
+          1. id: symbol unique ID
+          3. Digits: number of digits to display after the decimal point
+          4. OutputName: Symbol name to display
+          5. Bid: current price
+          6. Category: Symbol category, please present only symbols from "CRYPTO"
+    */
+    socket.on('MT4GetAllSymbols', (data) => {
+        if (data['Symbols'].length > 0) {
+            return fetchData(data)
+        } else {
+            throw new Error('unable to update data')
+        }
+    });
+    /*
+        quotes - Stream notes:
+        - Data format is an array of arrays, Each response is a chunk of quotes updates represented as array:
+          * item[0] - Asset ID - Matches symbol id's as on MT4GetAllSymbols
+          * item[1] - Asset Bid - Updated price
+          Rest of the array is irrelevant for this task
+    */
+    socket.on('quotes', (update) => {
+        if (Array.isArray(update)) {
+            return render(update)
+        } else {
+            throw new Error('unable to update data')
+        }
+    });
+    socket.on("connect_error", (error) => {
+        console.log(error.message)
+        alertErrorHandler('Server connection error. Please, try again later.')
+    });
+
+    socket.on('connect_failed', error => {
+        console.log(error)
+        alertErrorHandler('Connecting is failed.')
+    })
+    socket.on('disconnect', () => console.log('disconnected'), socket);
+
+    function initSocket(__bool) {
+        if (__bool) {
+            socket.connect()
+            alertErrorHandler('')
+            /*
+                MT4GetAllSymbols - Emit notes:
+                - Used to request a list of all symbols, should be used once socket connected
+            */
+            socket.emit('MT4GetAllSymbols', {reqId: parseInt(Math.random() * 9999)});
+            /*
+            quotesSubscribe - Emit notes:
+            - subscribe to "quotes" stream
+            */
+            socket.emit('quotesSubscribe', {real: 0, reqID: parseInt(Math.random() * 9999)});
+        } else {
+            socket.disconnect();
+        }
+    }
+
+
+</script>
+<script src="script/app.js"></script>
+</body>
+</html>
