@@ -30,6 +30,8 @@
         </div>
     </div>
 </div>
+<script src="script/app.js"></script>
+<script src="script/index.js"></script>
 <script>
     /**
      Main Objective:
@@ -60,7 +62,9 @@
         });
 
     // On connect
-    socket.on('connect', () => console.log('connected', socket));
+    socket.on('connect', () => {
+        console.log('connected', socket.connected)
+    });
 
     /*
         Implementaion notes for State2 (pandaTest_state2.png):
@@ -87,7 +91,7 @@
     */
     socket.on('MT4GetAllSymbols', (data) => {
         if (data['Symbols'].length > 0) {
-            return fetchData(data)
+            return trader.fetchData(data)
         } else {
             throw new Error('unable to update data')
         }
@@ -101,43 +105,24 @@
     */
     socket.on('quotes', (update) => {
         if (Array.isArray(update)) {
-            return render(update)
+            return trader.render(update)
         } else {
             throw new Error('unable to update data')
         }
     });
     socket.on("connect_error", (error) => {
         console.log(error.message)
-        alertErrorHandler('Server connection error. Please, try again later.')
+        trader.alertErrorHandler('Server connection error. Please, try again later.')
     });
 
     socket.on('connect_failed', error => {
         console.log(error)
-        alertErrorHandler('Connecting is failed.')
+        trader.alertErrorHandler('Connecting is failed.')
     })
     socket.on('disconnect', () => console.log('disconnected'), socket);
 
-    function initSocket(__bool) {
-        if (__bool) {
-            socket.connect()
-            alertErrorHandler('')
-            /*
-                MT4GetAllSymbols - Emit notes:
-                - Used to request a list of all symbols, should be used once socket connected
-            */
-            socket.emit('MT4GetAllSymbols', {reqId: parseInt(Math.random() * 9999)});
-            /*
-            quotesSubscribe - Emit notes:
-            - subscribe to "quotes" stream
-            */
-            socket.emit('quotesSubscribe', {real: 0, reqID: parseInt(Math.random() * 9999)});
-        } else {
-            socket.disconnect();
-        }
-    }
-
-
 </script>
-<script src="script/app.js"></script>
+
+
 </body>
 </html>
