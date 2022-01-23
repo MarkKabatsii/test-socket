@@ -11,7 +11,7 @@ sortSymbolBtn.addEventListener('click', () => {
 })
 
 connectBtn.addEventListener('click', function () {
-    trader.initSocket(socket)
+    trader.initSocket(emitSocket)
 })
 
 disconnectBtn.addEventListener('click', () => {

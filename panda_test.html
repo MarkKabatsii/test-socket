@@ -121,6 +121,20 @@
     })
     socket.on('disconnect', () => console.log('disconnected'), socket);
 
+    /*
+            MT4GetAllSymbols - Emit notes:
+            - Used to request a list of all symbols, should be used once socket connected
+        */
+    function emitSocket() {
+        socket.emit('MT4GetAllSymbols', {reqId: parseInt(Math.random() * 9999)});
+        /*
+        quotesSubscribe - Emit notes:
+        - subscribe to "quotes" stream
+        */
+        socket.emit('quotesSubscribe', {real: 0, reqID: parseInt(Math.random() * 9999)});
+    }
+
+
 </script>
 
 

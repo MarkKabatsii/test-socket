@@ -47,20 +47,10 @@ class Trader {
         })
     }
 
-    initSocket(socket) {
+    initSocket(emitSocket) {
         socket.connect()
         trader.alertErrorHandler('')
-        /*
-            MT4GetAllSymbols - Emit notes:
-            - Used to request a list of all symbols, should be used once socket connected
-        */
-        socket.emit('MT4GetAllSymbols', {reqId: parseInt(Math.random() * 9999)});
-        /*
-        quotesSubscribe - Emit notes:
-        - subscribe to "quotes" stream
-        */
-        socket.emit('quotesSubscribe', {real: 0, reqID: parseInt(Math.random() * 9999)});
-
+        emitSocket()
     }
 
     disconnectSocket(socket) {
